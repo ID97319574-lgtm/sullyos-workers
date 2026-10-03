@@ -9367,14 +9367,21 @@ var isFreshChatPresence = (value, charId, nowMs) => Boolean(
 );
 
 // utils/proxyWorker.ts
-var DEFAULT_PROXY_WORKER = "https://sullymeow.ccwu.cc";
+var DEFAULT_PROXY_WORKER = "https://proxy.friedsully.com";
 var LS_KEY = "sully_proxy_worker_url_v1";
-var STALE_HOSTS = [/sully-n\.qegj567\.workers\.dev/i, /sullymeow\.ccwu213\.cc/i];
+var STALE_HOSTS = /* @__PURE__ */ new Set(["sully-n.qegj567.workers.dev", "sullymeow.ccwu213.cc", "sullymeow.ccwu.cc"]);
+var isLegacyProxyWorkerUrl = (url) => {
+  try {
+    return STALE_HOSTS.has(new URL(url).hostname.toLowerCase());
+  } catch {
+    return false;
+  }
+};
 var normalize = (url) => url.trim().replace(/\/+$/, "");
 var runtimeOverrideUrl = null;
 var setProxyWorkerUrlOverride = (url) => {
   const trimmed = normalize(url || "");
-  runtimeOverrideUrl = /^https?:\/\//i.test(trimmed) ? trimmed : null;
+  runtimeOverrideUrl = /^https?:\/\//i.test(trimmed) ? isLegacyProxyWorkerUrl(trimmed) ? DEFAULT_PROXY_WORKER : trimmed : null;
 };
 var getProxyWorkerUrl = () => {
   if (runtimeOverrideUrl) return runtimeOverrideUrl;
@@ -9383,7 +9390,7 @@ var getProxyWorkerUrl = () => {
     if (!raw) return DEFAULT_PROXY_WORKER;
     const url = normalize(raw);
     if (!/^https?:\/\//i.test(url)) return DEFAULT_PROXY_WORKER;
-    if (STALE_HOSTS.some((re) => re.test(url))) return DEFAULT_PROXY_WORKER;
+    if (isLegacyProxyWorkerUrl(url)) return DEFAULT_PROXY_WORKER;
     return url;
   } catch {
     return DEFAULT_PROXY_WORKER;
