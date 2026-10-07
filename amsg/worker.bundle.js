@@ -16780,6 +16780,8 @@ function buildScheduledPush(message, build, extraMeta, bannerBody) {
 // utils/emotionEvalCore.ts
 var EMOTION_EVAL_SYSTEM_SLOT = "__EMOTION_EVAL_SYSTEM_PROMPT__";
 var EMOTION_EVAL_HISTORY_SLOT = "__EMOTION_EVAL_HISTORY__";
+var tagHomeSecretEval = (raw, requestId) => requestId && /^[\w-]+$/.test(requestId) ? `HOME_SECRET_REQUEST:${requestId}
+${raw}` : raw;
 var EMOTION_EVAL_TIMEOUT_MS = 12e4;
 var flattenEvalContent = (content) => {
   if (typeof content === "string") return content;
@@ -16907,7 +16909,10 @@ var takeEmotionEvalSpec = (metadata) => {
   return isUsableEvalSpec(spec) ? spec : null;
 };
 var EMOTION_EVAL_RIDE_ALONG_MS = 1e4;
-var runAmsgEmotionEval = async (spec, api, chatMessages, charName, timeoutMs = EMOTION_EVAL_TIMEOUT_MS, signal) => requestEmotionEval(api, restoreEvalPrompt(spec.prompt, chatMessages, charName), timeoutMs, signal);
+var runAmsgEmotionEval = async (spec, api, chatMessages, charName, timeoutMs = EMOTION_EVAL_TIMEOUT_MS, signal) => {
+  const result = await requestEmotionEval(api, restoreEvalPrompt(spec.prompt, chatMessages, charName), timeoutMs, signal);
+  return result.raw ? { ...result, raw: tagHomeSecretEval(result.raw, spec.homeSecretRequestId) } : result;
+};
 
 // utils/amsgScheduleResult.ts
 var SCHEDULE_CHANGE_RESULT_KIND = "schedule-change";
